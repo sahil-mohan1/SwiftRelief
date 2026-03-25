@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescue Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: calc(100vh - 70px); width: 100%; z-index: 1; }
+        .sos-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 16px 30px rgba(220, 38, 38, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            z-index: 9999;
+            cursor: pointer;
+            border: 4px solid #fff;
+        }
+        .soft-panel {
+            background: #fff;
+            border: 1px solid #fecaca;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+        }
+        /* Sidebar styling */
+        #hospital-sidebar {
+            width: 350px;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            #hospital-sidebar {
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                height: 40%;
+                z-index: 1001;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-rose-50 via-white to-white overflow-hidden">
+
+    <nav class="bg-white/95 border-b border-red-100 h-[70px] px-6 flex items-center justify-between sticky top-0 z-[1002] backdrop-blur-sm">
+        <div class="flex items-center gap-4">
+            <h1 class="font-bold text-red-600 text-xl">SwiftRelief</h1>
+            <div class="flex gap-2">
+                <input type="text" id="searchInput" placeholder="Search location..." class="p-2.5 border border-slate-300 rounded-xl text-sm w-64 focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none">
+                <!-- Category selector (shown when user prefers it) -->
+                <select id="emergencyType" class="p-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none">
+                <option value="All (No filter)" selected>All (No filter)</option>
+                <option value="Emergency / Trauma">Emergency / Trauma</option>
+                <option value="Cardiology (Heart)">Cardiology (Heart)</option>
+                <option value="Neurology (Brain / Stroke)">Neurology (Brain / Stroke)</option>
+                <option value="Orthopedics (Bones / Fracture)">Orthopedics (Bones / Fracture)</option>
+                <option value="Ophthalmology (Eye)">Ophthalmology (Eye)</option>
+                <option value="Gynecology (Maternity / Women’s Health)">Gynecology (Maternity / Women’s Health)</option>
+                <option value="Pediatrics (Child Care)">Pediatrics (Child Care)</option>
+                <option value="ENT">ENT</option>
+</select>
+
+                <!-- Symptom input (shown by default unless user opts into category selector) -->
+                <input type="text" id="symptomInput" placeholder="Enter symptoms (e.g., knee pain)" class="p-2.5 border border-slate-300 rounded-xl text-sm w-64 focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none hidden">
+                <!-- Offline mode toggle -->
+                <label class="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm select-none">
+                    <span class="text-slate-600">Offline</span>
+                    <input id="offlineToggle" type="checkbox" class="sr-only" />
+                    <span id="offlinePill" class="relative inline-flex h-5 w-10 items-center rounded-full bg-slate-200 transition">
+                        <span id="offlineDot" class="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1"></span>
+                    </span>
+                </label>
+                <button onclick="handleSearch()" class="bg-red-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200">Search</button>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="profileBtn" onclick="goProfile()" class="flex items-center gap-2 text-slate-700 font-medium px-3 py-2 rounded-xl hover:bg-rose-50">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 font-bold">👤</span>
+                <span id="profileBtnName" class="text-sm">Profile</span>
+            </button>
+            <button onclick="logout()" class="text-slate-500 font-medium px-3 py-2 rounded-xl hover:bg-rose-50">Logout</button>
+        </div>
+    </nav>
+
+    <div class="flex">
+        <aside id="hospital-sidebar" class="soft-panel border-r p-4">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <span class="w-3 h-3 bg-red-500 rounded-full"></span>
+                Nearest Hospitals
+            </h2>
+            <div id="hospitalList" class="space-y-4">
+                <p class="text-gray-500 text-sm italic text-center py-10">
+                    Search or press SOS to find nearby facilities.
+                </p>
+            </div>
+        </aside>
+
+        <main class="flex-grow relative">
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <div class="sos-btn hover:scale-105 active:scale-95 transition-all" onclick="triggerEmergency()">SOS</div>
+
+    <!-- Feedback modal (thumbs + dropdown reason) -->
+    <div id="feedbackModal" class="fixed inset-0 hidden items-center justify-center z-[2000]">
+        <div class="absolute inset-0 bg-black/40" onclick="closeFeedbackModal()"></div>
+        <div class="relative bg-white w-[92%] max-w-md rounded-2xl border border-red-100 shadow-xl p-5">
+            <h3 class="text-lg font-bold text-slate-800">Feedback</h3>
+            <p id="feedbackHospitalName" class="text-sm text-slate-600 mt-1"></p>
+
+            <div class="mt-4">
+                <label class="text-xs font-semibold text-slate-700">Reason</label>
+                <select id="feedbackReason" class="mt-2 w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none">
+                    <option value="" selected disabled>Select a reason</option>
+                </select>
+            </div>
+
+            <div class="mt-5 flex gap-2 justify-end">
+                <button class="px-4 py-2 rounded-xl text-sm bg-slate-100 hover:bg-slate-200" onclick="closeFeedbackModal()">Cancel</button>
+                <button id="feedbackSubmitBtn" class="px-4 py-2 rounded-xl text-sm bg-red-600 text-white hover:bg-red-700" onclick="submitFeedback()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        if(!localStorage.getItem('token')) window.location.href = '/login';
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+
+        const map = L.map('map').setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        let userMarker;
+        // When a manual search is used, these track the query and human-readable label.
+        let lastSearchQuery = null;
+        let selectedPlaceLabel = null;
+        let hospitalLayer = L.layerGroup().addTo(map);
+        let currentRunId = null;
+
+        // Canonical dropdown reason codes (must match backend)
+        const POS_REASONS = [
+            { code: 'closest', label: 'Closest' },
+            { code: 'matches_need', label: 'Matches my need' },
+            { code: 'trusted', label: 'Trusted/known hospital' },
+            { code: 'affordable', label: 'Affordable' },
+        ];
+        const NEG_REASONS = [
+            { code: 'too_far_or_slow', label: 'Too far / too slow' },
+            { code: 'not_relevant', label: 'Not relevant to my condition' },
+            { code: 'lacks_facilities', label: 'Lacks required facilities' },
+            { code: 'low_rating', label: 'Low rating / bad reviews' },
+            { code: 'seems_invalid_or_duplicate', label: 'Seems invalid / duplicate' },
+            { code: 'private_or_expensive', label: 'Private / expensive' },
+        ];
+
+        // Feedback modal state
+        
+
+function populateReasons(selectEl, thumbs) {
+    const reasons = (thumbs === 1) ? POS_REASONS : NEG_REASONS;
+    // Reset options
+    selectEl.innerHTML = '<option value="" selected disabled>Select a reason</option>';
+    reasons.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.code;
+        opt.textContent = r.label;
+        selectEl.appendChild(opt);
+    });
+}
+let pendingFeedback = { hospital_id: null, run_candidate_id: null, thumbs: null, name: '' };
+
+        function openFeedbackModal(hospitalId, runCandidateId, thumbs, hospitalName) {
+            if (!currentRunId) {
+                alert('Run ID missing. Please search again.');
+                return;
+            }
+            if (!hospitalId) {
+                alert('Hospital ID missing. Please search again.');
+                return;
+            }
+            pendingFeedback = { hospital_id: hospitalId, run_candidate_id: runCandidateId || null, thumbs, name: hospitalName || '' };
+            document.getElementById('feedbackHospitalName').textContent = hospitalName || '';
+            const sel = document.getElementById('feedbackReason');
+            populateReasons(sel, thumbs);
+            document.getElementById('feedbackModal').classList.remove('hidden');
+            document.getElementById('feedbackModal').classList.add('flex');
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pendingFeedback = { hospital_id: null, run_candidate_id: null, thumbs: null, name: '' };
+        }
+
+        async function submitFeedback() {
+            const reason = document.getElementById('feedbackReason').value;
+            if (!reason) {
+                alert('Please select a reason.');
+                return;
+            }
+            const btn = document.getElementById('feedbackSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const res = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({
+                        run_id: currentRunId,
+                        hospital_id: pendingFeedback.hospital_id,
+                        run_candidate_id: pendingFeedback.run_candidate_id,
+                        thumbs: pendingFeedback.thumbs,
+                        reason_code: reason
+                    })
+                });
+                const out = await res.json();
+                if (!out.success) throw new Error(out.message || 'Failed to save feedback');
+                closeFeedbackModal();
+            } catch (e) {
+                alert(e.message || String(e));
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit';
+            }
+        }
+
+        async function triggerEmergency() {
+            if (!navigator.geolocation) return alert("Geolocation not supported");
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                // Clear manual search state so origin is device GPS coordinates
+                lastSearchQuery = null;
+                selectedPlaceLabel = null;
+                try { localStorage.removeItem('last_place_label'); } catch (e) {}
+                updateView(latitude, longitude);
+            });
+        }
+
+        async function updateView(lat, lon) {
+            map.setView([lat, lon], 14);
+            if(userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
+
+            // Include symptom when user prefers symptom input; otherwise include emergency_type
+            const bodyPayload = { lat, lon, offline_mode: isOfflineMode() };
+            const useCategory = localStorage.getItem('use_category_selector') === '1';
+            if (useCategory) {
+                bodyPayload.emergency_type = getEmergencyType();
+            } else {
+                // pass symptom text (or leave emergency_type as 'general')
+                const sym = (document.getElementById('symptomInput') && document.getElementById('symptomInput').value) ? document.getElementById('symptomInput').value.trim() : '';
+                if (sym) bodyPayload.symptom = sym;
+                bodyPayload.emergency_type = 'general';
+            }
+
+            const res = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: JSON.stringify(bodyPayload)
+                });
+            
+            const result = await res.json();
+            const payload = result.data || {};
+            currentRunId = payload.run_id || null;
+            renderHospitals(payload.results || [], lat, lon);
+        }
+
+        function escapeHtml(s) {
+            return String(s ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function friendlyExplainLabel(label, positive) {
+            const low = String(label || '').trim().toLowerCase();
+            if (!low) return null;
+
+            const hidden = new Set([
+                'baseline score',
+                'source',
+                'candidate source',
+                'data confidence',
+                'gender',
+                'age',
+            ]);
+            if (hidden.has(low)) return null;
+
+            if (low === 'distance') return positive ? 'Shorter Distance' : 'Longer Distance';
+            if (low === 'rating') return positive ? 'High Average Rating' : 'Low Average Rating';
+            if (low === 'rating count') return positive ? 'High Review Volume' : 'Low Review Volume';
+            if (low === 'need match') return null;
+            if (low === 'emergency type') return null;
+            if (low === 'critical emergency type') return null;
+
+            const map = {
+                'offline mode': positive ? 'Offline results mode' : 'Offline mode may reduce result freshness',
+                'penalty': 'Lower confidence signals',
+                'asthma/copd profile': 'Matches your health profile',
+                'diabetes profile': 'Matches your health profile',
+                'heart-disease profile': 'Matches your health profile',
+                'stroke-history profile': 'Matches your health profile',
+                'epilepsy profile': 'Matches your health profile',
+                'pregnancy profile': 'Matches your health profile',
+            };
+
+            return map[low] || String(label || '').trim();
+        }
+
+        function renderExplainBlock(explain, hosp, maxNegativeChips = 1) {
+            const blocked = new Set(['baseline score', 'source', 'data confidence']);
+            const ratingCountVal = Number(hosp?.user_rating_count ?? 0);
+            const ratingVal = Number(hosp?.rating ?? 0);
+            const distanceKmVal = Number(hosp?.distance_km ?? 0);
+            const hideRatingCount = !Number.isFinite(ratingCountVal) || ratingCountVal < 500;
+            // Absolute threshold rules for positive cards
+            const forceHighRating = Number.isFinite(ratingVal) && ratingVal > 0 && ratingVal > 4.4;
+            const forceShortDistanceChip = Number.isFinite(distanceKmVal) && distanceKmVal > 0 && distanceKmVal < 9;
+            const forceReviewVolumeChip = Number.isFinite(ratingCountVal) && ratingCountVal >= 1000;
+
+            if (!explain || !Array.isArray(explain.top_positive) || explain.top_positive.length === 0) {
+                return `
+                    <div class="mt-2">
+                        <p class="text-[11px] font-semibold text-slate-600">Why recommended</p>
+                        <p class="text-[11px] text-slate-500">Explanation unavailable for this hospital.</p>
+                    </div>
+                `;
+            }
+
+            const positiveItems = explain.top_positive
+                .filter((e) => {
+                    const label = String((e && (e.label || e.feature)) || '').trim().toLowerCase();
+                    if (blocked.has(label)) return false;
+                    if (hideRatingCount && label === 'rating count') return false;
+                    // Only show "Shorter Distance" when distance is genuinely short (< 9 km)
+                    if (label === 'distance' && Number.isFinite(distanceKmVal) && distanceKmVal >= 9) return false;
+                    // Only show "High Average Rating" when rating is genuinely high (> 4.4)
+                    if (label === 'rating' && Number.isFinite(ratingVal) && ratingVal <= 4.4) return false;
+                    return true;
+                })
+                .slice(0, 3);
+
+            const hasRatingChip = positiveItems.some(
+                (e) => String((e && (e.label || e.feature)) || '').trim().toLowerCase() === 'rating'
+            );
+            if (forceHighRating && !hasRatingChip) {
+                if (positiveItems.length >= 3) positiveItems.pop();
+                positiveItems.push({ label: 'rating' });
+            }
+
+            const hasDistanceChip = positiveItems.some(
+                (e) => String((e && (e.label || e.feature)) || '').trim().toLowerCase() === 'distance'
+            );
+            if (forceShortDistanceChip && !hasDistanceChip) {
+                if (positiveItems.length >= 3) positiveItems.pop();
+                positiveItems.push({ label: 'distance' });
+            }
+
+            const hasReviewVolumeChip = positiveItems.some(
+                (e) => String((e && (e.label || e.feature)) || '').trim().toLowerCase() === 'rating count'
+            );
+            if (forceReviewVolumeChip && !hasReviewVolumeChip) {
+                if (positiveItems.length >= 3) positiveItems.pop();
+                positiveItems.push({ label: 'rating count' });
+            }
+
+            const positiveLabels = positiveItems
+                .map((e) => {
+                    const rawLabel = String((e && (e.label || e.feature)) || '').trim();
+                    return friendlyExplainLabel(rawLabel, true);
+                })
+                .filter((x) => !!x)
+                .slice(0, 3);
+
+            if (positiveLabels.length === 0) {
+                return `
+                    <div class="mt-2">
+                        <p class="text-[11px] font-semibold text-slate-600">Why recommended</p>
+                        <p class="text-[11px] text-slate-500">Explanation unavailable for this hospital.</p>
+                    </div>
+                `;
+            }
+
+            const chips = positiveLabels
+                .map((label) => `<span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full font-bold">+ ${escapeHtml(label)}</span>`)
+                .join(' ');
+
+            const negativeItems = (Array.isArray(explain.top_negative) ? explain.top_negative : [])
+                .filter((e) => {
+                    const lbl = String((e && (e.label || e.feature)) || '').trim().toLowerCase();
+                    if (blocked.has(lbl)) return false;
+                    if (lbl === 'rating count' && ratingCountVal >= 200) return false;
+                    // Only show "Low Average Rating" when rating is genuinely low (< 3.8)
+                    if (lbl === 'rating' && Number.isFinite(ratingVal) && ratingVal >= 3.8) return false;
+                    // Only show "Longer Distance" when distance is genuinely far (> 15 km)
+                    if (lbl === 'distance' && Number.isFinite(distanceKmVal) && distanceKmVal <= 15) return false;
+                    return true;
+                })
+                .slice(0, 2);
+
+            const negativeLabels = negativeItems
+                .map((n) => {
+                    const rawLabel = String((n && (n.label || n.feature)) || '').trim();
+                    return friendlyExplainLabel(rawLabel, false);
+                })
+                .filter((x) => !!x)
+                .slice(0, Math.max(1, Number(maxNegativeChips) || 1));
+
+            // Absolute threshold rules: always show these when conditions are met
+            if (Number.isFinite(ratingVal) && ratingVal > 0 && ratingVal < 3.8
+                    && !negativeLabels.includes('Low Average Rating')) {
+                negativeLabels.push('Low Average Rating');
+            }
+            if (Number.isFinite(distanceKmVal) && distanceKmVal > 15
+                    && !negativeLabels.includes('Longer Distance')) {
+                negativeLabels.push('Longer Distance');
+            }
+
+            const negative = negativeLabels.length > 0
+                ? `<div class="mt-1 flex flex-wrap gap-1">${negativeLabels
+                    .map((label) => `<span class="text-[10px] bg-red-50 text-red-700 px-2 py-1 rounded-full font-bold">- ${escapeHtml(label)}</span>`)
+                    .join(' ')}</div>`
+                : '';
+
+            return `
+                <div class="mt-2">
+                    <p class="text-[11px] font-semibold text-slate-600">Why recommended</p>
+                    <div class="mt-1 flex flex-wrap gap-1">${chips}</div>
+                    ${negative}
+                </div>
+            `;
+        }
+
+        function renderHospitals(hospitals, userLat, userLon) {
+            const listDiv = document.getElementById('hospitalList');
+            listDiv.innerHTML = '';
+            hospitalLayer.clearLayers();
+
+            function buildDirectionsUrl(originLat, originLon, hosp) {
+                const oLat = Number(originLat);
+                const oLon = Number(originLon);
+                const dLat = Number(hosp?.lat);
+                const dLon = Number(hosp?.lon);
+                const placeId = String(hosp?.place_id || '').trim();
+
+                if (Number.isFinite(oLat) && Number.isFinite(oLon) && Number.isFinite(dLat) && Number.isFinite(dLon)) {
+                    const origin = (lastSearchQuery && selectedPlaceLabel) ? selectedPlaceLabel : `${oLat},${oLon}`;
+                    const destination = `${dLat},${dLon}`;
+                    if (placeId) {
+                        return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&destination_place_id=${encodeURIComponent(placeId)}&travelmode=driving`;
+                    }
+                    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&travelmode=driving`;
+                }
+                return hosp?.maps || '#';
+            }
+
+            if (!hospitals || hospitals.length === 0) {
+                listDiv.innerHTML = '<p class="text-sm text-gray-500">No hospitals found in this area.</p>';
+                return;
+            }
+
+            hospitals.forEach((hosp, index) => {
+                // Add Marker to Map
+                const marker = L.marker([hosp.lat, hosp.lon])
+                    .addTo(hospitalLayer)
+                    .bindPopup(`<b>${hosp.name}</b>`);
+
+                const phoneText = (hosp.phone && String(hosp.phone).trim()) ? String(hosp.phone).trim() : null;
+                const websiteUrl = (hosp.website && String(hosp.website).trim()) ? String(hosp.website).trim() : null;
+                const allowTwoNegatives = index >= Math.max(0, hospitals.length - 3);
+                const explainHtml = renderExplainBlock(hosp.explain, hosp, allowTwoNegatives ? 2 : 1);
+                const routeUrl = buildDirectionsUrl(userLat, userLon, hosp);
+                const scoreText = (hosp.score !== undefined && hosp.score !== null && !Number.isNaN(Number(hosp.score)))
+                    ? Number(hosp.score).toFixed(2)
+                    : null;
+
+                // Add Item to Sidebar List
+                const item = document.createElement('div');
+                item.className = "p-4 border border-red-100 rounded-2xl hover:border-red-300 transition shadow-sm bg-white";
+                item.innerHTML = `
+                    <h3 class="font-bold text-slate-800">${hosp.name}</h3>
+                    <p class="text-xs text-slate-500 truncate">${hosp.address || 'Emergency Unit'}</p>
+                    ${phoneText ? `<p class="text-sm font-semibold text-slate-700 mt-2">Phone: ${phoneText}</p>` : ''}
+                    ${scoreText ? `<p class="text-xs font-semibold text-slate-700 mt-1">Score: ${scoreText}</p>` : ''}
+                    ${explainHtml}
+                    <div class="flex justify-between mt-3 items-center">
+                        <span class="text-xs font-bold text-red-600">${(hosp.distance_km !== undefined && hosp.distance_km !== null) ? Number(hosp.distance_km).toFixed(2) : '---'} km</span>
+                        <div class="flex items-center gap-2">
+                            <button title="Thumbs up" class="text-[12px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold" data-action="up">👍</button>
+                            <button title="Thumbs down" class="text-[12px] bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-bold" data-action="down">👎</button>
+                            ${websiteUrl ? `<a href="${websiteUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] bg-red-50 text-red-700 px-2 py-1 rounded-full font-bold">WEBSITE</a>` : ''}
+                            <a href="${routeUrl}" target="_blank" rel="noopener noreferrer" class="text-[10px] bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">ROUTE</a>
+                        </div>
+                    </div>
+                `;
+
+                // Card click: focus on map (but don't hijack button clicks)
+                item.addEventListener('click', (ev) => {
+                    const t = ev.target;
+                    if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return;
+                    map.setView([hosp.lat, hosp.lon], 16);
+                    marker.openPopup();
+                });
+
+                // Feedback buttons
+                const upBtn = item.querySelector('button[data-action="up"]');
+                const downBtn = item.querySelector('button[data-action="down"]');
+                if (upBtn) upBtn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    openFeedbackModal(hosp.hospital_id, hosp.run_candidate_id, 1, hosp.name);
+                });
+                if (downBtn) downBtn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    openFeedbackModal(hosp.hospital_id, hosp.run_candidate_id, -1, hosp.name);
+                });
+                
+                listDiv.appendChild(item);
+            });
+
+            // Fit map to show both user and first (nearest) hospital
+            if (hospitals.length > 0) {
+                const group = new L.featureGroup([userMarker, L.marker([hospitals[0].lat, hospitals[0].lon])]);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+        async function handleSearch() {
+            const query = document.getElementById('searchInput').value;
+            const offline = isOfflineMode();
+            const res = await fetch(`/api/geocode?query=${encodeURIComponent(query)}&offline=${offline ? '1' : '0'}`);
+            const result = await res.json();
+                if(result.success) {
+                // Record manual search details so we can use the place label as origin in Maps
+                lastSearchQuery = query;
+                selectedPlaceLabel = String(result.data.display_name || result.data.name || query).trim();
+                try { localStorage.setItem('last_place_label', selectedPlaceLabel); } catch (e) {}
+                updateView(result.data.lat, result.data.lon);
+            } else {
+                alert(result.message || 'Location not found');
+            }
+        }
+
+        (function bindSearchEnterKey(){
+            const input = document.getElementById('searchInput');
+            if (!input) return;
+            input.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                handleSearch();
+            });
+        })();
+
+        // Offline mode UI + persistence
+        function isOfflineMode() {
+            return localStorage.getItem('offline_mode') === '1';
+        }
+
+        function setOfflineMode(on) {
+            localStorage.setItem('offline_mode', on ? '1' : '0');
+            const pill = document.getElementById('offlinePill');
+            const dot = document.getElementById('offlineDot');
+            const toggle = document.getElementById('offlineToggle');
+            if (!pill || !dot || !toggle) return;
+            toggle.checked = !!on;
+            if (on) {
+                pill.classList.remove('bg-slate-200');
+                pill.classList.add('bg-red-600');
+                dot.classList.remove('translate-x-1');
+                dot.classList.add('translate-x-5');
+            } else {
+                pill.classList.add('bg-slate-200');
+                pill.classList.remove('bg-red-600');
+                dot.classList.add('translate-x-1');
+                dot.classList.remove('translate-x-5');
+            }
+        }
+
+        (function initOfflineToggle(){
+            const toggle = document.getElementById('offlineToggle');
+            if (!toggle) return;
+            setOfflineMode(isOfflineMode());
+            toggle.addEventListener('change', () => {
+                setOfflineMode(toggle.checked);
+            });
+            // Clicking the pill also toggles
+            const pill = document.getElementById('offlinePill');
+            if (pill) pill.addEventListener('click', () => {
+                toggle.checked = !toggle.checked;
+                setOfflineMode(toggle.checked);
+            });
+        })();
+
+        // Toggle between category selector and symptom input based on profile preference
+        (function initSymptomOrCategoryToggle(){
+            const sel = document.getElementById('emergencyType');
+            const sym = document.getElementById('symptomInput');
+            const useCategory = localStorage.getItem('use_category_selector') === '1';
+            if (!sel || !sym) return;
+            if (useCategory) {
+                sel.classList.remove('hidden');
+                sym.classList.add('hidden');
+            } else {
+                sel.classList.add('hidden');
+                sym.classList.remove('hidden');
+            }
+            // If the user toggles in profile, they must reload dashboard to see updated control.
+        })();
+
+        function getEmergencyType() {
+            const el = document.getElementById('emergencyType');
+            return el ? el.value : 'general';
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+
+        function goProfile() {
+            window.location.href = '/profile';
+        }
+
+        // Load user name for profile button
+        (async function loadMe(){
+            try {
+                const res = await fetch('/api/profile', {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+                });
+                const out = await res.json();
+                if (out && out.success && out.profile) {
+                    const nm = out.profile.name || 'Profile';
+                    const el = document.getElementById('profileBtnName');
+                    if (el) el.textContent = nm;
+                }
+            } catch (e) {
+                // ignore
+            }
+        })();
+    </script>
+</body>
+</html>

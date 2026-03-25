@@ -1,0 +1,78 @@
+# Ignore misc folders
+other/
+
+# Ignore shortcuts
+*.lnk
+
+# VS Code (optional)
+.vscode/
+
+# Backend
+swiftrelief_backend/models/tf_v3_repro_104
+swiftrelief_backend/models/catboost_v4
+
+# Flutter
+swiftrelief_flutter/build/
+swiftrelief_flutter/.dart_tool/
+swiftrelief_flutter/.gradle/
+swiftrelief_flutter/android/.gradle/
+swiftrelief_flutter/android/app/build/
+swiftrelief_flutter/ios/Pods/
+swiftrelief_flutter/ios/.symlinks/
+
+# Flutter / Dart extras
+swiftrelief_flutter/.packages
+swiftrelief_flutter/.flutter-plugins
+swiftrelief_flutter/.flutter-plugins-dependencies
+swiftrelief_flutter/.pub/
+
+# ML / training logs
+swiftrelief_backend/catboost_info/
+
+# General
+*.log
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.env
+
+
+# IDEs / editors
+.idea/
+*.iml
+*.code-workspace
+    
+# OS files
+ehthumbs.db
+Icon?
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+
+swiftrelief_backend/tokyo-eye-485312-v5-10cbf4772a53.json
+swiftrelief_backend/data/app.db-shm
+swiftrelief_backend/data/app.db-wal
+swiftrelief_backend/data/app.db

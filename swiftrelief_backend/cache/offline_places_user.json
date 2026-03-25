@@ -1,0 +1,285 @@
+{
+  "version": 1,
+  "places": [
+    {
+      "name": "kozhikode",
+      "alt": [],
+      "lat": 11.2488425,
+      "lng": 75.78392099999999
+    },
+    {
+      "name": "bekal",
+      "alt": [],
+      "lat": 12.4203532,
+      "lng": 75.0231457
+    },
+    {
+      "name": "aluva",
+      "alt": [],
+      "lat": 10.1003709,
+      "lng": 76.35703819999999
+    },
+    {
+      "name": "kochi",
+      "alt": [],
+      "lat": 9.9312328,
+      "lng": 76.26730409999999
+    },
+    {
+      "name": "fort kochi",
+      "alt": [],
+      "lat": 9.9657787,
+      "lng": 76.2421147
+    },
+    {
+      "name": "nadakkavu",
+      "alt": [],
+      "lat": 11.2725679,
+      "lng": 75.7800259
+    },
+    {
+      "name": "angamaly",
+      "alt": [],
+      "lat": 10.1926394,
+      "lng": 76.3869289
+    },
+    {
+      "name": "atholi",
+      "alt": [],
+      "lat": 11.3890912,
+      "lng": 75.7604066
+    },
+    {
+      "name": "ernajikkal",
+      "alt": [],
+      "lat": 11.335446,
+      "lng": 75.7623928
+    },
+    {
+      "name": "kalady",
+      "alt": [],
+      "lat": 10.1710193,
+      "lng": 76.4468254
+    },
+    {
+      "name": "trivandrum",
+      "alt": [
+        "trivandru"
+      ],
+      "lat": 8.5241391,
+      "lng": 76.9366376
+    },
+    {
+      "name": "mumbai",
+      "alt": [],
+      "lat": 18.9581934,
+      "lng": 72.8320729
+    },
+    {
+      "name": "kottakkal",
+      "alt": [],
+      "lat": 10.9989697,
+      "lng": 75.9917634
+    },
+    {
+      "name": "puthiyara",
+      "alt": [],
+      "lat": 11.2553795,
+      "lng": 75.7960106
+    },
+    {
+      "name": "parambath",
+      "alt": [],
+      "lat": 11.3580872,
+      "lng": 75.7618593
+    },
+    {
+      "name": "kannur",
+      "alt": [],
+      "lat": 11.8704703,
+      "lng": 75.367882
+    },
+    {
+      "name": "sreemoolanagaram",
+      "alt": [],
+      "lat": 10.1340201,
+      "lng": 76.4013471
+    },
+    {
+      "name": "elamkulam",
+      "alt": [],
+      "lat": 9.971731499999999,
+      "lng": 76.3013871
+    },
+    {
+      "name": "thrissur",
+      "alt": [],
+      "lat": 10.5241176,
+      "lng": 76.2120649
+    },
+    {
+      "name": "mattoor",
+      "alt": [],
+      "lat": 10.170628,
+      "lng": 76.4296056
+    },
+    {
+      "name": "chowara",
+      "alt": [],
+      "lat": 10.1282593,
+      "lng": 76.37315269999999
+    },
+    {
+      "name": "kalamassery",
+      "alt": [
+        "kalamasseri"
+      ],
+      "lat": 10.0531493,
+      "lng": 76.3528075
+    },
+    {
+      "name": "kanimangalam",
+      "alt": [],
+      "lat": 10.486062,
+      "lng": 76.2088012
+    },
+    {
+      "name": "kasargod",
+      "alt": [],
+      "lat": 12.5064039,
+      "lng": 74.994322
+    },
+    {
+      "name": "kas",
+      "alt": [],
+      "lat": 36.199913,
+      "lng": 29.63955
+    },
+    {
+      "name": "ulliyeri",
+      "alt": [],
+      "lat": 11.4502229,
+      "lng": 75.77105689999999
+    },
+    {
+      "name": "preumbavoor",
+      "alt": [],
+      "lat": 10.1146301,
+      "lng": 76.4777526
+    },
+    {
+      "name": "edappally",
+      "alt": [],
+      "lat": 10.0260688,
+      "lng": 76.3124753
+    },
+    {
+      "name": "mattancherry",
+      "alt": [],
+      "lat": 9.9578326,
+      "lng": 76.25553239999999
+    },
+    {
+      "name": "vyttila",
+      "alt": [],
+      "lat": 9.9683438,
+      "lng": 76.3180457
+    },
+    {
+      "name": "muvattupuzha",
+      "alt": [],
+      "lat": 9.9894229,
+      "lng": 76.57897489999999
+    },
+    {
+      "name": "paravoor",
+      "alt": [],
+      "lat": 8.814188999999999,
+      "lng": 76.6672602
+    },
+    {
+      "name": "chalakudy",
+      "alt": [],
+      "lat": 10.3070105,
+      "lng": 76.3340589
+    },
+    {
+      "name": "irinjalakuda",
+      "alt": [],
+      "lat": 10.3468925,
+      "lng": 76.2074124
+    },
+    {
+      "name": "vypin",
+      "alt": [],
+      "lat": 9.974,
+      "lng": 76.244
+    },
+    {
+      "name": "eranakulam south",
+      "alt": [],
+      "lat": 9.9816358,
+      "lng": 76.2998842
+    },
+    {
+      "name": "bangalore",
+      "alt": [],
+      "lat": 12.9628669,
+      "lng": 77.57750899999999
+    },
+    {
+      "name": "annassery",
+      "alt": [],
+      "lat": 11.3711767,
+      "lng": 75.7749395
+    },
+    {
+      "name": "palakkad",
+      "alt": [],
+      "lat": 10.7733121,
+      "lng": 76.6580401
+    },
+    {
+      "name": "chennai",
+      "alt": [],
+      "lat": 13.0843007,
+      "lng": 80.2704622
+    },
+    {
+      "name": "ollur",
+      "alt": [],
+      "lat": 10.4824761,
+      "lng": 76.2386765
+    },
+    {
+      "name": "feroke",
+      "alt": [],
+      "lat": 11.1734548,
+      "lng": 75.8352429
+    },
+    {
+      "name": "madurai",
+      "alt": [],
+      "lat": 9.9252007,
+      "lng": 78.1197754
+    },
+    {
+      "name": "indore",
+      "alt": [],
+      "lat": 22.7195687,
+      "lng": 75.8577258
+    },
+    {
+      "name": "parassinikadavu",
+      "alt": [],
+      "lat": 11.9842763,
+      "lng": 75.3994546
+    },
+    {
+      "name": "erakkulam",
+      "alt": [],
+      "lat": 11.3208936,
+      "lng": 75.8036346
+    }
+  ]
+}

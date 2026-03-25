@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SwiftRelief</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-rose-50 via-white to-white flex items-center justify-center min-h-screen p-6">
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-28 -left-20 h-72 w-72 rounded-full bg-red-100 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-rose-100 blur-3xl"></div>
+    </div>
+
+    <div class="relative bg-white/95 p-10 rounded-3xl border border-red-100 shadow-2xl shadow-red-100/60 w-full max-w-md">
+        <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+        <p class="text-slate-500 mb-8">Enter your credentials to access your dashboard.</p>
+        
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Email Address</label>
+                <input type="email" id="email" class="w-full p-3 border border-slate-300 rounded-xl mt-1 focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Password</label>
+                <input type="password" id="password" class="w-full p-3 border border-slate-300 rounded-xl mt-1 focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            </div>
+            <button type="submit" class="w-full bg-red-600 text-white p-3 rounded-xl font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200">Sign In</button>
+        </form>
+        
+        <p class="mt-6 text-center text-slate-600">
+            New here? <a href="/register" class="text-red-600 font-semibold hover:text-red-700">Create an account</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                localStorage.setItem('token', result.token); //
+                window.location.href = '/dashboard';
+            } else {
+                alert(result.message);
+            }
+        };
+    </script>
+</body>
+</html>

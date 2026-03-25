@@ -1,0 +1,12 @@
+Flask==3.0.3
+Flask-JWT-Extended==4.6.0
+python-dotenv==1.0.1
+pandas==2.2.2
+googlemaps==4.10.0
+requests==2.32.3
+Werkzeug==3.0.3
+tensorflow-cpu==2.15.0
+shap==0.46.0
+catboost==1.2.8
+matplotlib==3.8.4
+google-auth==3.12.0

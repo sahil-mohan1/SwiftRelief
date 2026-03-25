@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Emergency Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-b from-rose-50 via-white to-white flex items-center justify-center min-h-screen p-6">
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-red-100 blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-rose-100 blur-3xl"></div>
+    </div>
+
+    <div class="relative bg-white/95 p-8 rounded-3xl border border-red-100 shadow-2xl shadow-red-100/60 w-full max-w-md my-8">
+        <h2 class="text-2xl font-bold text-slate-900 mb-1 text-center">Create Health Profile</h2>
+        <p class="text-sm text-slate-500 mb-6 text-center">Secure your details for faster emergency recommendations.</p>
+        <form id="regForm" class="space-y-4">
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            <input type="password" id="password" placeholder="Password (min 6 chars)" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            
+            <hr class="my-4 border-red-100">
+            <h3 class="font-semibold text-slate-800">Medical Information</h3>
+
+            <div class="space-y-2">
+                <label class="text-sm text-slate-600" for="age">Age <span class="text-red-600">*</span></label>
+                <input type="number" id="age" min="0" max="120" placeholder="e.g. 23" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm text-slate-600" for="gender">Gender <span class="text-red-600">*</span></label>
+                <select id="gender" class="w-full p-3 border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" required>
+                    <option value="Other" selected>Other</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <p class="text-sm text-slate-600">Select any that apply (optional)</p>
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_asthma_copd" class="h-4 w-4">Asthma / COPD</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_diabetes" class="h-4 w-4">Diabetes</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_heart" class="h-4 w-4">Heart disease</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_stroke" class="h-4 w-4">Stroke history</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_epilepsy" class="h-4 w-4">Epilepsy</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="cond_pregnant" class="h-4 w-4">Pregnant</label>
+                </div>
+            </div>
+
+            <textarea id="other_info" placeholder="Other medical notes (optional)" class="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-400 outline-none" rows="3"></textarea>
+            
+            <button type="submit" class="w-full bg-red-600 text-white p-3 rounded-xl font-semibold hover:bg-red-700 transition shadow-lg shadow-red-200">Register & Secure Profile</button>
+        </form>
+        <p class="mt-4 text-center text-sm text-slate-600">Already have an account? <a href="/login" class="text-red-600 font-semibold hover:text-red-700">Login</a></p>
+    </div>
+
+    <script>
+        document.getElementById('regForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                conditions: {
+                    asthma_copd: document.getElementById('cond_asthma_copd').checked,
+                    diabetes: document.getElementById('cond_diabetes').checked,
+                    heart_disease: document.getElementById('cond_heart').checked,
+                    stroke_history: document.getElementById('cond_stroke').checked,
+                    epilepsy: document.getElementById('cond_epilepsy').checked,
+                    pregnant: document.getElementById('cond_pregnant').checked
+                },
+                other_info: document.getElementById('other_info').value
+            };
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.success) {
+                localStorage.setItem('token', result.token);
+                window.location.href = '/dashboard';
+            } else { alert(result.message); }
+        };
+    </script>
+</body>
+</html>
